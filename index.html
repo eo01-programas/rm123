@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Ramas Movil</title>
+    <link rel="stylesheet" href="css/ramas-mobile.css">
+</head>
+<body>
+
+    <!-- Barra de resumen (visible en páginas 2-5) -->
+    <div class="summary-strip hidden" id="ramas-summary-strip">
+        <div class="summary-chips" id="ramas-summary-chips"></div>
+    </div>
+
+    <main class="wizard-shell">
+
+        <!-- PÁGINA 1: Datos del Personal -->
+        <section class="wizard-page" id="ramas-page-1">
+            <div class="mobile-card">
+                <p class="page-eyebrow">Paso 1 de 5</p>
+                <h2 class="page-title">Datos del Personal</h2>
+                <form id="ramas-page1-form" class="stack-gap" autocomplete="off">
+                    <label class="field-group">
+                        <span class="field-label">Supervisor</span>
+                        <select id="ramas-supervisor" class="mobile-input">
+                            <option value="">-- Seleccionar --</option>
+                            <option value="LUIS FORERO">LUIS FORERO</option>
+                            <option value="WILSON SEMPERTEGUE">WILSON SEMPERTEGUE</option>
+                            <option value="RICHARD HUARCAYA">RICHARD HUARCAYA</option>
+                        </select>
+                    </label>
+                    <label class="field-group">
+                        <span class="field-label">Operario</span>
+                        <input id="ramas-operario" class="mobile-input" type="text" autocomplete="off" placeholder="Ej: JUAN PEREZ">
+                    </label>
+                    <label class="field-group">
+                        <span class="field-label">Inspector</span>
+                        <input id="ramas-inspector" class="mobile-input" type="text" autocomplete="off" placeholder="Ej: CARLOS RAMOS">
+                    </label>
+                    <button type="submit" class="primary-button primary-button-wide">Siguiente →</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- PÁGINA 2: Máquina -->
+        <section class="wizard-page hidden" id="ramas-page-2">
+            <div class="mobile-card">
+                <div class="page-head-nav">
+                    <button type="button" class="back-button" data-back-to="1">← Atrás</button>
+                    <div>
+                        <p class="page-eyebrow">Paso 2 de 5</p>
+                        <h2 class="page-title">Seleccionar Máquina</h2>
+                    </div>
+                </div>
+                <div class="option-grid">
+                    <button type="button" class="option-button" data-maquina="UNITECH">UNITECH</button>
+                    <button type="button" class="option-button" data-maquina="K30">K30</button>
+                    <button type="button" class="option-button" data-maquina="K20">K20</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- PÁGINA 3: Tipo -->
+        <section class="wizard-page hidden" id="ramas-page-3">
+            <div class="mobile-card">
+                <div class="page-head-nav">
+                    <button type="button" class="back-button" data-back-to="2">← Atrás</button>
+                    <div>
+                        <p class="page-eyebrow">Paso 3 de 5</p>
+                        <h2 class="page-title">Seleccionar Tipo</h2>
+                    </div>
+                </div>
+                <div class="option-grid option-grid-2">
+                    <button type="button" class="option-button option-button-crudo" data-tipo="CRUDO">CRUDO</button>
+                    <button type="button" class="option-button option-button-acabado" data-tipo="ACABADO">ACABADO</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- PÁGINA 4: Proceso (solo si ACABADO) -->
+        <section class="wizard-page hidden" id="ramas-page-4">
+            <div class="mobile-card">
+                <div class="page-head-nav">
+                    <button type="button" class="back-button" data-back-to="3">← Atrás</button>
+                    <div>
+                        <p class="page-eyebrow">Paso 4 de 5</p>
+                        <h2 class="page-title">Seleccionar Proceso</h2>
+                    </div>
+                </div>
+                <div class="option-grid option-grid-2">
+                    <button type="button" class="option-button" data-proceso="CHANCADO">CHANCADO</button>
+                    <button type="button" class="option-button" data-proceso="LAVADO">LAVADO</button>
+                    <button type="button" class="option-button" data-proceso="MATIZADO">MATIZADO</button>
+                    <button type="button" class="option-button" data-proceso="RESINADO">RESINADO</button>
+                    <button type="button" class="option-button" data-proceso="RE-TERMOFIJADO">RE-TERMOFIJADO</button>
+                    <button type="button" class="option-button" data-proceso="SECADO">SECADO</button>
+                    <button type="button" class="option-button" data-proceso="SUAVIZADO">SUAVIZADO</button>
+                    <button type="button" class="option-button" data-proceso="TERMO-ACABADO">TERMO-ACABADO</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- PÁGINA 5: Búsqueda y Registro -->
+        <section class="wizard-page hidden" id="ramas-page-5">
+
+            <!-- Buscador -->
+            <div class="mobile-card">
+                <div class="page-head-nav">
+                    <button type="button" class="back-button" id="ramas-page5-back">← Atrás</button>
+                    <div>
+                        <p class="page-eyebrow">Paso 5 de 5</p>
+                        <h2 class="page-title">Buscar OP-PTDA</h2>
+                    </div>
+                </div>
+                <form id="ramas-search-form" autocomplete="off">
+                    <div class="search-row">
+                        <input
+                            id="ramas-search"
+                            class="mobile-input"
+                            type="tel"
+                            inputmode="tel"
+                            maxlength="18"
+                            placeholder="Ej: 12345-1">
+                        <button type="submit" class="primary-button mobile-icon-button" aria-label="Buscar" title="Buscar">
+                            <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                                <path d="M10.75 4a6.75 6.75 0 1 0 0 13.5 6.75 6.75 0 0 0 0-13.5Zm-8.25 6.75a8.25 8.25 0 1 1 14.59 5.28l4.19 4.19a.75.75 0 1 1-1.06 1.06l-4.19-4.19A8.25 8.25 0 0 1 2.5 10.75Z"></path>
+                            </svg>
+                        </button>
+                        <button type="button" id="ramas-scan-button" class="primary-button mobile-icon-button mobile-scan-button" aria-label="Escanear QR" title="Escanear QR">
+                            <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                                <path d="M4 4h6v6H4V4Zm1.5 1.5v3h3v-3h-3ZM14 4h6v6h-6V4Zm1.5 1.5v3h3v-3h-3ZM4 14h6v6H4v-6Zm1.5 1.5v3h3v-3h-3ZM14 14h2.5v1.5H15.5v1H14V14Zm4 0h2v3.5h-1.5v-2H18V14Zm-2.5 4H17v2h-3v-1.5h1.5V18Zm3.5 0h1.5v2H19v-2Z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </form>
+                <p class="status-line" id="ramas-sync-status">Cargando datos...</p>
+            </div>
+
+            <!-- Resultados -->
+            <div class="mobile-card">
+                <div class="section-head">
+                    <div>
+                        <h2>Resultados</h2>
+                        <p class="section-copy" id="ramas-result-summary">Ingresa una OP-PTDA para comenzar.</p>
+                    </div>
+                    <button type="button" id="ramas-select-all" class="ghost-button section-action-button hidden">Seleccionar todo</button>
+                </div>
+                <div id="ramas-results" class="result-list">
+                    <div class="empty-state">Ingresa una OP-PTDA para ver coincidencias.</div>
+                </div>
+            </div>
+
+            <!-- Registro (oculto hasta seleccionar un registro) -->
+            <div class="mobile-card hidden" id="ramas-form-card">
+                <div class="section-head section-head-form">
+                    <h2>Registro</h2>
+                    <label class="inline-field-group inline-field-group-turno" for="ramas-turno">
+                        <span class="field-label">Turno</span>
+                        <input id="ramas-turno" class="mobile-input inline-turno-input" type="text" readonly>
+                    </label>
+                </div>
+                <p class="section-copy" id="ramas-record-summary"></p>
+
+                <div class="form-grid form-grid-3">
+                    <label class="field-group">
+                        <span class="field-label">Ancho</span>
+                        <input id="ramas-field-ancho" class="mobile-input" type="tel" inputmode="numeric" placeholder="140" maxlength="3">
+                    </label>
+                    <label class="field-group">
+                        <span class="field-label">Densidad</span>
+                        <input id="ramas-field-densidad" class="mobile-input" type="tel" inputmode="numeric" placeholder="120" maxlength="3">
+                    </label>
+                    <label class="field-group">
+                        <span class="field-label">Temp (°C)</span>
+                        <input id="ramas-field-temperatura" class="mobile-input" type="tel" inputmode="numeric" placeholder="180" maxlength="3">
+                    </label>
+                    <label class="field-group">
+                        <span class="field-label">Velocidad</span>
+                        <input id="ramas-field-velocidad" class="mobile-input" type="text" inputmode="decimal" placeholder="15.5" maxlength="5">
+                    </label>
+                    <label class="field-group">
+                        <span class="field-label">Alimentación</span>
+                        <input id="ramas-field-alimentacion" class="mobile-input" type="text" inputmode="text" placeholder="10/12" maxlength="5">
+                    </label>
+                    <label class="field-group">
+                        <span class="field-label">Ancho cadena</span>
+                        <input id="ramas-field-ancho-cadena" class="mobile-input" type="tel" inputmode="numeric" placeholder="145" maxlength="3">
+                    </label>
+                </div>
+                <label class="field-group field-group-obs">
+                    <span class="field-label">Observaciones</span>
+                    <textarea id="ramas-field-observaciones" class="mobile-input mobile-textarea" rows="2" placeholder="Observaciones opcionales..."></textarea>
+                </label>
+
+                <div class="action-buttons">
+                    <button type="button" id="ramas-inicio-btn" class="primary-button action-button action-button-inicio">INICIO</button>
+                    <button type="button" id="ramas-fin-btn" class="primary-button action-button action-button-fin" disabled>FIN</button>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <div id="ramas-toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/qr-scanner.js"></script>
+    <script src="js/ramas-mobile.js"></script>
+</body>
+</html>
