@@ -5,7 +5,7 @@
         operario: '',
         inspector: '',
         maquina: '',
-        tipo: '',       // 'CRUDO' | 'ACABADO'
+        tipo: '',
         proceso: '',
         records: [],
         filteredRecords: [],
@@ -24,9 +24,31 @@
         return (h >= 7 && h < 19) ? '1T' : '2T';
     }
 
-    function isRecordDone(record) {
+    // --- Helpers de pases (valores separados por coma) ---
+
+    function parsePassValues(fieldValue) {
+        const raw = String(fieldValue || '').trim();
+        if (!raw) return [];
+        return raw.split(',').map(v => v.trim());
+    }
+
+    function getPassCount(record) {
         const prefix = getPrefix();
-        return String(record[`${prefix}_estado`] || '').trim().toUpperCase() === 'OK';
+        return parsePassValues(record[`${prefix}_inicio`]).filter(Boolean).length;
+    }
+
+    function getFinCount(record) {
+        const prefix = getPrefix();
+        return parsePassValues(record[`${prefix}_fin`]).filter(Boolean).length;
+    }
+
+    function hasOpenPass(record) {
+        return getPassCount(record) > getFinCount(record);
+    }
+
+    function appendPassValue(existing, newValue) {
+        const current = String(existing || '').trim();
+        return current ? `${current},${newValue}` : String(newValue);
     }
 
     // --- Toast ---
@@ -54,20 +76,11 @@
         strip.classList.remove('hidden');
 
         const chips = [];
-
         const personalParts = [state.supervisor, state.operario, state.inspector].filter(Boolean);
-        if (personalParts.length) {
-            chips.push({ label: personalParts.join(' | '), page: 1 });
-        }
-        if (state.maquina && state.currentPage >= 3) {
-            chips.push({ label: state.maquina, page: 2 });
-        }
-        if (state.tipo && state.currentPage >= 4) {
-            chips.push({ label: state.tipo, page: 3 });
-        }
-        if (state.tipo === 'ACABADO' && state.proceso && state.currentPage >= 5) {
-            chips.push({ label: state.proceso, page: 4 });
-        }
+        if (personalParts.length) chips.push({ label: personalParts.join(' | '), page: 1 });
+        if (state.maquina && state.currentPage >= 3) chips.push({ label: state.maquina, page: 2 });
+        if (state.tipo && state.currentPage >= 4) chips.push({ label: state.tipo, page: 3 });
+        if (state.tipo === 'ACABADO' && state.proceso && state.currentPage >= 5) chips.push({ label: state.proceso, page: 4 });
 
         chipsEl.innerHTML = chips.map(({ label, page }) => `
             <button type="button" class="summary-chip" data-back-to="${page}">
@@ -81,15 +94,11 @@
     function goToPage(pageNum) {
         const targetSection = document.getElementById(`ramas-page-${pageNum}`);
         if (targetSection) {
-            targetSection.querySelectorAll('.option-button-selected').forEach(btn => {
-                btn.classList.remove('option-button-selected');
-            });
+            targetSection.querySelectorAll('.option-button-selected').forEach(btn => btn.classList.remove('option-button-selected'));
         }
-
         document.querySelectorAll('.wizard-page').forEach((section, idx) => {
             section.classList.toggle('hidden', idx + 1 !== pageNum);
         });
-
         state.currentPage = pageNum;
         updateSummaryStrip();
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -99,7 +108,6 @@
 
     function handlePage1Submit(event) {
         event.preventDefault();
-
         const supervisorEl = document.getElementById('ramas-supervisor');
         const operarioEl = document.getElementById('ramas-operario');
         const inspectorEl = document.getElementById('ramas-inspector');
@@ -171,7 +179,7 @@
         }, 180);
     }
 
-    // --- Página 5: Estado de sincronización ---
+    // --- Sync status ---
 
     function setSyncStatus(message, isError) {
         const el = document.getElementById('ramas-sync-status');
@@ -211,10 +219,8 @@
         });
     }
 
-    // IDs de registros que se pueden seleccionar (no son OK)
     function getSelectableIds() {
         return state.filteredRecords
-            .filter(r => !isRecordDone(r))
             .map(r => String(r.id_registro || ''))
             .filter(Boolean);
     }
@@ -234,6 +240,49 @@
         if (searchInput) searchInput.value = '';
         renderResults();
         hideFormCard();
+    }
+
+    // --- Estado visual por pases ---
+
+    function getStatusInfo(record) {
+        const prefix = getPrefix();
+        const passCount = parsePassValues(record[`${prefix}_inicio`]).filter(Boolean).length;
+        const finCount = parsePassValues(record[`${prefix}_fin`]).filter(Boolean).length;
+        const open = passCount > finCount;
+
+        if (open) {
+            return { label: 'En proceso', pillClass: 'status-in-progress' };
+        }
+        if (passCount > 0) {
+            const label = passCount === 1 ? '1 pase ✓' : `${passCount} pases ✓`;
+            return { label, pillClass: 'status-registered' };
+        }
+        return { label: 'Pendiente', pillClass: 'status-pending' };
+    }
+
+    // --- Historial de pases en tarjeta ---
+
+    function buildPassesHtml(record) {
+        const prefix = getPrefix();
+        const inicios = parsePassValues(record[`${prefix}_inicio`]).filter(Boolean);
+        if (!inicios.length) return '';
+
+        const fines = parsePassValues(record[`${prefix}_fin`]);
+
+        const lines = inicios.map((inicio, i) => {
+            const fin = fines[i] || '';
+            const isOpen = !fin;
+            const timeLabel = fin
+                ? `${TintoreriaUtils.escapeHtml(inicio)} → ${TintoreriaUtils.escapeHtml(fin)}`
+                : `${TintoreriaUtils.escapeHtml(inicio)} → en curso...`;
+
+            return `<div class="pass-line${isOpen ? ' pass-line-open' : ''}">
+                <strong>Pase ${i + 1}</strong>
+                <span class="pass-time${isOpen ? ' pass-time-open' : ''}">${timeLabel}</span>
+            </div>`;
+        });
+
+        return `<div class="record-passes">${lines.join('')}</div>`;
     }
 
     // --- Renderizado de resultados ---
@@ -270,7 +319,6 @@
 
         resultSummary.textContent = '';
 
-        // Botón "Seleccionar todo"
         if (selectAllBtn) {
             selectAllBtn.classList.toggle('hidden', selectableIds.length === 0);
             selectAllBtn.textContent = (selectableIds.length > 0 && selectedCount === selectableIds.length)
@@ -278,66 +326,28 @@
                 : 'Seleccionar todo';
         }
 
-        const prefix = getPrefix();
-
         resultList.innerHTML = state.filteredRecords.map(record => {
             const recordId = String(record.id_registro || '');
-            const done = isRecordDone(record);
             const checked = state.selectedIds.has(recordId);
-            const estado = String(record[`${prefix}_estado`] || 'X PROG').trim() || 'X PROG';
-            const inicio = String(record[`${prefix}_inicio`] || '').trim();
-            const fin = String(record[`${prefix}_fin`] || '').trim();
-            const isProg = estado === 'PROG';
-
+            const status = getStatusInfo(record);
             const color = TintoreriaUtils.escapeHtml(TintoreriaUtils.formatColorLabel(record.color || 'Sin color'));
             const article = TintoreriaUtils.escapeHtml(record.articulo || 'Sin articulo');
             const ruta = TintoreriaUtils.escapeHtml(record.ruta || '—');
             const clienteOp = TintoreriaUtils.escapeHtml(
                 `${record.cliente || 'Sin cliente'} - ${TintoreriaUtils.formatOpPartida(record.op_tela, record.partida)}`
             );
-
-            let statusClass, statusLabel;
-            if (done) {
-                statusClass = 'status-registered';
-                statusLabel = 'Completado';
-            } else if (isProg) {
-                statusClass = 'status-in-progress';
-                statusLabel = 'En proceso';
-            } else {
-                statusClass = 'status-pending';
-                statusLabel = 'Pendiente';
-            }
+            const passesHtml = buildPassesHtml(record);
 
             const cardClass = [
-                'record-card',
-                done ? 'record-card-done' : 'record-card-selectable',
-                !done && checked ? 'record-card-selected' : ''
+                'record-card record-card-selectable',
+                checked ? 'record-card-selected' : ''
             ].filter(Boolean).join(' ');
 
-            const inicioLine = inicio
-                ? `<div class="meta-line"><strong>Inicio:</strong> ${TintoreriaUtils.escapeHtml(inicio)}</div>`
-                : '';
-            const finLine = fin
-                ? `<div class="meta-line"><strong>Fin:</strong> ${TintoreriaUtils.escapeHtml(fin)}</div>`
-                : '';
-
-            const selectRow = done
-                ? ''
-                : `<div class="select-row">
-                       <label class="checkbox-label">
-                           <input type="checkbox" class="ramas-checkbox" data-record-id="${TintoreriaUtils.escapeHtml(recordId)}" ${checked ? 'checked' : ''}>
-                           Seleccionar
-                       </label>
-                   </div>`;
-
             return `
-                <article
-                    class="${cardClass}"
-                    ${done ? '' : `data-record-id="${TintoreriaUtils.escapeHtml(recordId)}"`}
-                >
+                <article class="${cardClass}" data-record-id="${TintoreriaUtils.escapeHtml(recordId)}">
                     <div class="record-head">
                         <div class="record-title">${clienteOp}</div>
-                        <span class="status-pill ${statusClass}">${statusLabel}</span>
+                        <span class="status-pill ${status.pillClass}">${TintoreriaUtils.escapeHtml(status.label)}</span>
                     </div>
                     <div class="record-detail-line"><strong>${color}</strong><span>${article}</span></div>
                     <div class="record-meta">
@@ -346,15 +356,18 @@
                             <span class="meta-separator">|</span>
                             <strong>Ruta:</strong> ${ruta}
                         </div>
-                        ${inicioLine}
-                        ${finLine}
                     </div>
-                    ${selectRow}
+                    ${passesHtml}
+                    <div class="select-row">
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="ramas-checkbox" data-record-id="${TintoreriaUtils.escapeHtml(recordId)}" ${checked ? 'checked' : ''}>
+                            Seleccionar
+                        </label>
+                    </div>
                 </article>
             `;
         }).join('');
 
-        // Mostrar u ocultar el form card según selección
         if (selectedCount > 0) {
             showFormCard(selectedCount);
         } else {
@@ -378,50 +391,56 @@
         const turnoEl = document.getElementById('ramas-turno');
         if (turnoEl) turnoEl.value = calculateTurno();
 
-        // Si hay un solo registro, poblar campos con sus valores existentes
         if (selectedCount === 1) {
             const [recordId] = Array.from(state.selectedIds);
             const record = findRecord(recordId);
             if (record) {
+                const open = hasOpenPass(record);
                 const prefix = getPrefix();
-                const fieldMap = {
-                    'ramas-field-ancho':        `${prefix}_ancho`,
-                    'ramas-field-densidad':     `${prefix}_densidad`,
-                    'ramas-field-temperatura':  `${prefix}_temperatura`,
-                    'ramas-field-velocidad':    `${prefix}_velocidad`,
-                    'ramas-field-alimentacion': `${prefix}_alimentacion`,
-                    'ramas-field-ancho-cadena': `${prefix}_ancho_de_cadena`,
-                    'ramas-field-observaciones':`${prefix}_observaciones`
-                };
-                Object.entries(fieldMap).forEach(([htmlId, fieldName]) => {
-                    const el = document.getElementById(htmlId);
-                    if (el) el.value = record[fieldName] || '';
-                });
 
-                // Estado de los botones según el registro
-                const prefix2 = getPrefix();
-                const inicio = String(record[`${prefix2}_inicio`] || '').trim();
-                const fin = String(record[`${prefix2}_fin`] || '').trim();
-                updateActionButtons(inicio, fin);
+                if (open) {
+                    // Pre-cargar con el último valor de cada campo del pase abierto
+                    const fieldMap = {
+                        'ramas-field-temperatura':  `${prefix}_temperatura`,
+                        'ramas-field-velocidad':    `${prefix}_velocidad`,
+                        'ramas-field-alimentacion': `${prefix}_alimentacion`,
+                        'ramas-field-ancho-cadena': `${prefix}_ancho_de_cadena`,
+                        'ramas-field-ancho':        `${prefix}_ancho`,
+                        'ramas-field-densidad':     `${prefix}_densidad`,
+                        'ramas-field-observaciones':`${prefix}_observaciones`
+                    };
+                    Object.entries(fieldMap).forEach(([htmlId, fieldName]) => {
+                        const el = document.getElementById(htmlId);
+                        if (!el) return;
+                        const values = parsePassValues(record[fieldName]);
+                        el.value = values.length ? values[values.length - 1] : '';
+                    });
+                } else {
+                    clearFormFields();
+                }
+
+                updateActionButtons(open);
                 formCard.classList.remove('hidden');
                 return;
             }
         }
 
-        // Múltiples registros: limpiar campos y activar INICIO
+        // Múltiples registros: limpiar y calcular estado mixto
         clearFormFields();
-        updateActionButtons('', '');
+        const selectedRecords = Array.from(state.selectedIds).map(id => findRecord(id)).filter(Boolean);
+        const anyOpen = selectedRecords.some(r => hasOpenPass(r));
+        const anyNotOpen = selectedRecords.some(r => !hasOpenPass(r));
+        updateActionButtonsMixed(anyOpen, anyNotOpen);
         formCard.classList.remove('hidden');
     }
 
-    function updateActionButtons(inicio, fin) {
+    function updateActionButtons(hasOpen) {
         const inicioBtn = document.getElementById('ramas-inicio-btn');
         const finBtn = document.getElementById('ramas-fin-btn');
 
         if (inicioBtn) {
-            if (inicio) {
-                const label = TintoreriaUtils.formatProcessDateTimeLabel(inicio) || inicio;
-                inicioBtn.textContent = `✓ ${label}`;
+            if (hasOpen) {
+                inicioBtn.textContent = '✓ En proceso';
                 inicioBtn.disabled = true;
                 inicioBtn.classList.add('button-done');
             } else {
@@ -432,25 +451,39 @@
         }
 
         if (finBtn) {
-            if (fin) {
-                const label = TintoreriaUtils.formatProcessDateTimeLabel(fin) || fin;
-                finBtn.textContent = `✓ ${label}`;
+            if (hasOpen) {
+                finBtn.textContent = 'FIN';
+                finBtn.disabled = false;
+                finBtn.classList.remove('button-done');
+            } else {
+                finBtn.textContent = '— FIN —';
                 finBtn.disabled = true;
                 finBtn.classList.add('button-done');
-            } else {
-                finBtn.textContent = 'FIN';
-                finBtn.classList.remove('button-done');
-                // FIN activo si hay inicio (single) o para múltiples siempre activo
-                finBtn.disabled = false;
             }
+        }
+    }
+
+    function updateActionButtonsMixed(anyOpen, anyNotOpen) {
+        const inicioBtn = document.getElementById('ramas-inicio-btn');
+        const finBtn = document.getElementById('ramas-fin-btn');
+
+        if (inicioBtn) {
+            inicioBtn.textContent = 'INICIO';
+            inicioBtn.disabled = !anyNotOpen;
+            inicioBtn.classList.toggle('button-done', !anyNotOpen);
+        }
+        if (finBtn) {
+            finBtn.textContent = 'FIN';
+            finBtn.disabled = !anyOpen;
+            finBtn.classList.toggle('button-done', !anyOpen);
         }
     }
 
     function clearFormFields() {
         const ids = [
-            'ramas-field-ancho', 'ramas-field-densidad', 'ramas-field-temperatura',
-            'ramas-field-velocidad', 'ramas-field-alimentacion', 'ramas-field-ancho-cadena',
-            'ramas-field-observaciones'
+            'ramas-field-temperatura', 'ramas-field-velocidad',
+            'ramas-field-alimentacion', 'ramas-field-ancho-cadena',
+            'ramas-field-ancho', 'ramas-field-densidad', 'ramas-field-observaciones'
         ];
         ids.forEach(id => {
             const el = document.getElementById(id);
@@ -467,11 +500,7 @@
 
     function updateSelected(recordId, checked) {
         if (!recordId) return;
-        if (checked) {
-            state.selectedIds.add(recordId);
-        } else {
-            state.selectedIds.delete(recordId);
-        }
+        if (checked) { state.selectedIds.add(recordId); } else { state.selectedIds.delete(recordId); }
         renderResults();
     }
 
@@ -502,7 +531,6 @@
     function handleResultClick(event) {
         const target = event.target;
         if (!(target instanceof Element)) return;
-        // Si el clic fue en el checkbox o su label, el evento change lo maneja
         if (target.closest('.checkbox-label') || target.classList.contains('ramas-checkbox')) return;
         const card = target.closest('.record-card-selectable');
         if (!card) return;
@@ -521,53 +549,98 @@
     function collectFormValues() {
         const prefix = getPrefix();
         return {
-            [`${prefix}_ancho`]:           (document.getElementById('ramas-field-ancho') || {}).value || '',
-            [`${prefix}_densidad`]:        (document.getElementById('ramas-field-densidad') || {}).value || '',
-            [`${prefix}_temperatura`]:     (document.getElementById('ramas-field-temperatura') || {}).value || '',
-            [`${prefix}_velocidad`]:       (document.getElementById('ramas-field-velocidad') || {}).value || '',
-            [`${prefix}_alimentacion`]:    (document.getElementById('ramas-field-alimentacion') || {}).value || '',
-            [`${prefix}_ancho_de_cadena`]: (document.getElementById('ramas-field-ancho-cadena') || {}).value || '',
-            [`${prefix}_observaciones`]:   (document.getElementById('ramas-field-observaciones') || {}).value || ''
+            [`${prefix}_temperatura`]:     String((document.getElementById('ramas-field-temperatura') || {}).value || ''),
+            [`${prefix}_velocidad`]:       String((document.getElementById('ramas-field-velocidad') || {}).value || ''),
+            [`${prefix}_alimentacion`]:    String((document.getElementById('ramas-field-alimentacion') || {}).value || ''),
+            [`${prefix}_ancho_de_cadena`]: String((document.getElementById('ramas-field-ancho-cadena') || {}).value || ''),
+            [`${prefix}_ancho`]:           String((document.getElementById('ramas-field-ancho') || {}).value || ''),
+            [`${prefix}_densidad`]:        String((document.getElementById('ramas-field-densidad') || {}).value || ''),
+            [`${prefix}_observaciones`]:   String((document.getElementById('ramas-field-observaciones') || {}).value || '')
         };
     }
 
-    // --- Botón INICIO (batch) ---
+    // --- Validaciones ---
+
+    function validateInicioFields() {
+        const required = [
+            { id: 'ramas-field-temperatura',  label: 'Temp (°C)' },
+            { id: 'ramas-field-velocidad',    label: 'Velocidad' },
+            { id: 'ramas-field-alimentacion', label: 'Alimentación' },
+            { id: 'ramas-field-ancho-cadena', label: 'Ancho cadena' }
+        ];
+        return required
+            .filter(f => { const el = document.getElementById(f.id); return !el || !String(el.value || '').trim(); })
+            .map(f => f.label);
+    }
+
+    function validateFinFields() {
+        const required = [
+            { id: 'ramas-field-temperatura',  label: 'Temp (°C)' },
+            { id: 'ramas-field-velocidad',    label: 'Velocidad' },
+            { id: 'ramas-field-alimentacion', label: 'Alimentación' },
+            { id: 'ramas-field-ancho-cadena', label: 'Ancho cadena' },
+            { id: 'ramas-field-ancho',        label: 'Ancho(cm)' },
+            { id: 'ramas-field-densidad',     label: 'Densidad(g/m2)' }
+        ];
+        return required
+            .filter(f => { const el = document.getElementById(f.id); return !el || !String(el.value || '').trim(); })
+            .map(f => f.label);
+    }
+
+    // --- Botón INICIO ---
 
     async function handleInicio() {
         const selectedIds = Array.from(state.selectedIds);
         if (!selectedIds.length) { showToast('Selecciona al menos un registro.'); return; }
+
+        const missing = validateInicioFields();
+        if (missing.length) {
+            showToast(`Completa los campos requeridos: ${missing.join(', ')}.`);
+            return;
+        }
 
         const prefix = getPrefix();
         const turno = calculateTurno();
         const inicioTimestamp = TintoreriaUtils.formatProcessDateTime(new Date());
         const formValues = collectFormValues();
 
-        const changes = {
-            [`${prefix}_supervisor`]: state.supervisor,
-            [`${prefix}_operario`]:   state.operario,
-            [`${prefix}_inspector`]:  state.inspector,
-            [`${prefix}_maquina`]:    state.maquina,
-            [`${prefix}_turno`]:      turno,
-            [`${prefix}_inicio`]:     inicioTimestamp,
-            [`${prefix}_estado`]:     'PROG',
-            ...formValues
-        };
-        if (state.tipo === 'ACABADO' && state.proceso) {
-            changes[`${prefix}_proceso`] = state.proceso;
+        const updates = selectedIds
+            .map(id => {
+                const record = findRecord(id);
+                if (!record || hasOpenPass(record)) return null;
+                const changes = {
+                    [`${prefix}_supervisor`]: appendPassValue(record[`${prefix}_supervisor`], state.supervisor),
+                    [`${prefix}_operario`]:   appendPassValue(record[`${prefix}_operario`], state.operario),
+                    [`${prefix}_inspector`]:  appendPassValue(record[`${prefix}_inspector`], state.inspector),
+                    [`${prefix}_maquina`]:    appendPassValue(record[`${prefix}_maquina`], state.maquina),
+                    [`${prefix}_turno`]:      appendPassValue(record[`${prefix}_turno`], turno),
+                    [`${prefix}_inicio`]:     appendPassValue(record[`${prefix}_inicio`], inicioTimestamp),
+                    [`${prefix}_estado`]:     'PROG'
+                };
+                if (state.tipo === 'ACABADO' && state.proceso) {
+                    changes[`${prefix}_proceso`] = appendPassValue(record[`${prefix}_proceso`], state.proceso);
+                }
+                Object.entries(formValues).forEach(([field, value]) => {
+                    changes[field] = appendPassValue(record[field], value);
+                });
+                return { id_registro: id, changes };
+            })
+            .filter(Boolean);
+
+        if (!updates.length) {
+            showToast('Los registros seleccionados ya tienen un pase abierto. Registra el FIN primero.');
+            return;
         }
 
         const inicioBtn = document.getElementById('ramas-inicio-btn');
         if (inicioBtn) { inicioBtn.disabled = true; inicioBtn.textContent = 'Guardando...'; }
 
         try {
-            const updates = selectedIds.map(id => ({ id_registro: id, changes }));
             const response = await TintoreriaAPI.updateRecords(updates);
             if (response && Array.isArray(response.records)) {
                 response.records.forEach(r => mergeUpdatedRecord(r));
             }
-            showToast(`Inicio registrado en ${selectedIds.length} fila(s).`);
-
-            // Volver a página 3 (tipo en blanco)
+            showToast(`Inicio registrado en ${updates.length} fila(s).`);
             state.tipo = '';
             state.proceso = '';
             goToPage(3);
@@ -578,21 +651,7 @@
         }
     }
 
-    // --- Botón FIN (batch) ---
-
-    function validateFinFields() {
-        const required = [
-            { id: 'ramas-field-ancho',        label: 'Ancho' },
-            { id: 'ramas-field-densidad',     label: 'Densidad' },
-            { id: 'ramas-field-temperatura',  label: 'Temperatura' },
-            { id: 'ramas-field-velocidad',    label: 'Velocidad' },
-            { id: 'ramas-field-alimentacion', label: 'Alimentación' },
-            { id: 'ramas-field-ancho-cadena', label: 'Ancho cadena' }
-        ];
-        return required
-            .filter(f => { const el = document.getElementById(f.id); return !el || !String(el.value || '').trim(); })
-            .map(f => f.label);
-    }
+    // --- Botón FIN ---
 
     async function handleFin() {
         const selectedIds = Array.from(state.selectedIds);
@@ -608,23 +667,42 @@
         const finTimestamp = TintoreriaUtils.formatProcessDateTime(new Date());
         const formValues = collectFormValues();
 
-        const changes = {
-            [`${prefix}_fin`]:    finTimestamp,
-            [`${prefix}_estado`]: 'OK',
-            ...formValues
-        };
+        const updates = selectedIds
+            .map(id => {
+                const record = findRecord(id);
+                if (!record || !hasOpenPass(record)) return null;
+                const changes = {
+                    [`${prefix}_fin`]:    appendPassValue(record[`${prefix}_fin`], finTimestamp),
+                    [`${prefix}_estado`]: 'OK'
+                };
+                // Actualizar el último valor de cada campo de medición con los datos del formulario
+                Object.entries(formValues).forEach(([field, value]) => {
+                    const existing = parsePassValues(record[field]);
+                    if (existing.length > 0) {
+                        existing[existing.length - 1] = value;
+                        changes[field] = existing.join(',');
+                    } else {
+                        changes[field] = value;
+                    }
+                });
+                return { id_registro: id, changes };
+            })
+            .filter(Boolean);
+
+        if (!updates.length) {
+            showToast('Los registros seleccionados no tienen un pase abierto para cerrar.');
+            return;
+        }
 
         const finBtn = document.getElementById('ramas-fin-btn');
         if (finBtn) { finBtn.disabled = true; finBtn.textContent = 'Guardando...'; }
 
         try {
-            const updates = selectedIds.map(id => ({ id_registro: id, changes }));
             const response = await TintoreriaAPI.updateRecords(updates);
             if (response && Array.isArray(response.records)) {
                 response.records.forEach(r => mergeUpdatedRecord(r));
             }
-            showToast(`Proceso completado en ${selectedIds.length} fila(s).`);
-
+            showToast(`Proceso completado en ${updates.length} fila(s).`);
             state.selectedIds = new Set();
             renderResults();
             hideFormCard();
@@ -632,6 +710,28 @@
             showToast(error && error.message ? error.message : 'No se pudo registrar el fin.');
             if (finBtn) { finBtn.disabled = false; finBtn.textContent = 'FIN'; }
         }
+    }
+
+    // --- Bloqueo de coma en todos los inputs ---
+
+    function blockCommaOnInput(event) {
+        if (event.data && event.data.includes(',')) {
+            event.preventDefault();
+        }
+    }
+
+    function bindCommaBlockers() {
+        const ids = [
+            'ramas-operario', 'ramas-inspector',
+            'ramas-field-temperatura', 'ramas-field-velocidad',
+            'ramas-field-alimentacion', 'ramas-field-ancho-cadena',
+            'ramas-field-ancho', 'ramas-field-densidad',
+            'ramas-field-observaciones'
+        ];
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('beforeinput', blockCommaOnInput);
+        });
     }
 
     // --- Escáner QR ---
@@ -696,16 +796,13 @@
         document.querySelectorAll('[data-maquina]').forEach(btn => {
             btn.addEventListener('click', () => handleMaquinaClick(btn.dataset.maquina));
         });
-
         document.querySelectorAll('[data-tipo]').forEach(btn => {
             btn.addEventListener('click', () => handleTipoClick(btn.dataset.tipo));
         });
-
         document.querySelectorAll('[data-proceso]').forEach(btn => {
             btn.addEventListener('click', () => handleProcesoClick(btn.dataset.proceso));
         });
 
-        // Navegación atrás (botones estáticos y chips de resumen)
         document.addEventListener('click', event => {
             const trigger = event.target.closest('[data-back-to]');
             if (!trigger) return;
@@ -713,7 +810,6 @@
             if (!isNaN(page)) goToPage(page);
         });
 
-        // Botón atrás dinámico de página 5
         const page5Back = document.getElementById('ramas-page5-back');
         if (page5Back) {
             page5Back.addEventListener('click', () => {
@@ -721,7 +817,6 @@
             });
         }
 
-        // Búsqueda
         const searchForm = document.getElementById('ramas-search-form');
         const searchInput = document.getElementById('ramas-search');
         if (searchForm) {
@@ -734,28 +829,23 @@
             searchInput.addEventListener('input', () => search(searchInput.value));
         }
 
-        // Resultados: cambio de checkbox y click en tarjeta
         const resultList = document.getElementById('ramas-results');
         if (resultList) {
             resultList.addEventListener('change', handleResultChange);
             resultList.addEventListener('click', handleResultClick);
         }
 
-        // Seleccionar todo
         const selectAllBtn = document.getElementById('ramas-select-all');
         if (selectAllBtn) selectAllBtn.addEventListener('click', toggleSelectAll);
 
-        // INICIO / FIN
         const inicioBtn = document.getElementById('ramas-inicio-btn');
         const finBtn = document.getElementById('ramas-fin-btn');
         if (inicioBtn) inicioBtn.addEventListener('click', handleInicio);
         if (finBtn) finBtn.addEventListener('click', handleFin);
 
-        // QR
         const scanBtn = document.getElementById('ramas-scan-button');
         if (scanBtn) scanBtn.addEventListener('click', handleScan);
 
-        // Cerrar teclado al tocar fuera de inputs
         document.addEventListener('pointerdown', event => {
             if (!(event.target instanceof Element)) return;
             if (event.target.closest('input, textarea, select, [contenteditable="true"], label, button')) return;
@@ -764,6 +854,8 @@
             if (!active.matches('input, textarea, select, [contenteditable="true"]')) return;
             active.blur();
         });
+
+        bindCommaBlockers();
     }
 
     async function init() {
