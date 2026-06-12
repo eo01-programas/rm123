@@ -665,8 +665,15 @@
                     [`${prefix}_maquina`]:    appendPassValue(record[`${prefix}_maquina`], state.maquina),
                     [`${prefix}_turno`]:      appendPassValue(record[`${prefix}_turno`], turno),
                     [`${prefix}_inicio`]:     appendPassValue(record[`${prefix}_inicio`], inicioTimestamp),
-                    [`${prefix}_estado`]:     'PROG'
+                    [`${prefix}_estado`]:     'PROG',
+                    'plegado_estado':         'OK'
                 };
+                if (state.tipo === 'ACABADO') {
+                    changes['rama_crudo_estado'] = 'OK';
+                    changes['preparado_estado']  = 'OK';
+                    changes['tenido_estado']     = 'OK';
+                    changes['abridora_estado']   = 'OK';
+                }
                 if (state.tipo === 'ACABADO' && state.proceso) {
                     changes[`${prefix}_proceso`] = appendPassValue(record[`${prefix}_proceso`], state.proceso);
                 }
