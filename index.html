@@ -162,30 +162,32 @@
                 </div>
                 <p class="section-copy" id="ramas-record-summary"></p>
 
-                <div class="form-grid form-grid-3">
-                    <label class="field-group">
-                        <span class="field-label">Ancho</span>
-                        <input id="ramas-field-ancho" class="mobile-input" type="tel" inputmode="numeric" placeholder="140" maxlength="3">
-                    </label>
-                    <label class="field-group">
-                        <span class="field-label">Densidad</span>
-                        <input id="ramas-field-densidad" class="mobile-input" type="tel" inputmode="numeric" placeholder="120" maxlength="3">
-                    </label>
+                <div class="form-grid form-grid-4">
                     <label class="field-group">
                         <span class="field-label">Temp (°C)</span>
-                        <input id="ramas-field-temperatura" class="mobile-input" type="tel" inputmode="numeric" placeholder="180" maxlength="3">
+                        <input id="ramas-field-temperatura" class="mobile-input" type="tel" inputmode="numeric" maxlength="3">
                     </label>
                     <label class="field-group">
                         <span class="field-label">Velocidad</span>
-                        <input id="ramas-field-velocidad" class="mobile-input" type="text" inputmode="decimal" placeholder="15.5" maxlength="5">
+                        <input id="ramas-field-velocidad" class="mobile-input" type="text" inputmode="decimal" maxlength="5">
                     </label>
                     <label class="field-group">
                         <span class="field-label">Alimentación</span>
-                        <input id="ramas-field-alimentacion" class="mobile-input" type="text" inputmode="text" placeholder="10/12" maxlength="5">
+                        <input id="ramas-field-alimentacion" class="mobile-input" type="text" inputmode="text" maxlength="5">
                     </label>
                     <label class="field-group">
                         <span class="field-label">Ancho cadena</span>
-                        <input id="ramas-field-ancho-cadena" class="mobile-input" type="tel" inputmode="numeric" placeholder="145" maxlength="3">
+                        <input id="ramas-field-ancho-cadena" class="mobile-input" type="tel" inputmode="numeric" maxlength="3">
+                    </label>
+                </div>
+                <div class="form-grid form-grid-2 form-grid-row2">
+                    <label class="field-group">
+                        <span class="field-label">Ancho(cm)</span>
+                        <input id="ramas-field-ancho" class="mobile-input" type="tel" inputmode="numeric" maxlength="3">
+                    </label>
+                    <label class="field-group">
+                        <span class="field-label">Densidad(g/m2)</span>
+                        <input id="ramas-field-densidad" class="mobile-input" type="tel" inputmode="numeric" maxlength="3">
                     </label>
                 </div>
                 <label class="field-group field-group-obs">
@@ -193,9 +195,13 @@
                     <textarea id="ramas-field-observaciones" class="mobile-input mobile-textarea" rows="2" placeholder="Observaciones opcionales..."></textarea>
                 </label>
 
-                <div class="action-buttons">
+                <div class="action-buttons" id="ramas-action-buttons">
                     <button type="button" id="ramas-inicio-btn" class="primary-button action-button action-button-inicio">INICIO</button>
                     <button type="button" id="ramas-fin-btn" class="primary-button action-button action-button-fin" disabled>FIN</button>
+                </div>
+                <div id="ramas-edit-mode-actions" class="action-buttons hidden">
+                    <button type="button" id="ramas-cancel-edit-btn" class="primary-button action-button action-button-cancel-edit">Cancelar</button>
+                    <button type="button" id="ramas-save-edit-btn" class="primary-button action-button action-button-save-edit">Guardar cambios</button>
                 </div>
             </div>
 
@@ -204,6 +210,42 @@
     </main>
 
     <div id="ramas-toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+    <!-- Modal: siguiente paso al terminar ACABADA -->
+    <div id="ramas-fin-modal" class="fin-modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Siguiente paso">
+        <div class="fin-modal-card">
+
+            <!-- Pantalla 1: 3 opciones principales -->
+            <div id="ramas-fin-modal-screen1">
+                <p class="fin-modal-eyebrow">Al terminar ACABADA</p>
+                <h3 class="fin-modal-title">¿Cuál es el siguiente paso?</h3>
+                <div class="fin-modal-options">
+                    <button type="button" class="fin-modal-btn fin-modal-btn-calidad" id="ramas-fin-opt-calidad">
+                        Pasa a Calidad
+                    </button>
+                    <button type="button" class="fin-modal-btn fin-modal-btn-rama" id="ramas-fin-opt-rama">
+                        Vuelve a Rama (ACABADA)
+                    </button>
+                    <button type="button" class="fin-modal-btn fin-modal-btn-especial" id="ramas-fin-opt-especial">
+                        Acabado Especial →
+                    </button>
+                </div>
+                <button type="button" class="fin-modal-cancel" id="ramas-fin-modal-cancel">Cancelar</button>
+            </div>
+
+            <!-- Pantalla 2: tipo de acabado especial -->
+            <div id="ramas-fin-modal-screen2" class="hidden">
+                <button type="button" class="back-button fin-modal-back" id="ramas-fin-modal-back">← Atrás</button>
+                <h3 class="fin-modal-title fin-modal-title-screen2">Seleccionar acabado especial</h3>
+                <div class="fin-modal-options">
+                    <button type="button" class="fin-modal-btn fin-modal-btn-tipo" data-acab-tipo="ESMERILADORA">ESMERILADORA</button>
+                    <button type="button" class="fin-modal-btn fin-modal-btn-tipo" data-acab-tipo="BIANCALANI">BIANCALANI</button>
+                    <button type="button" class="fin-modal-btn fin-modal-btn-tipo" data-acab-tipo="PERCHADORA">PERCHADORA</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
 
     <script src="js/config.js"></script>
     <script src="js/utils.js"></script>
