@@ -84,32 +84,80 @@
                 <div class="page-head-nav">
                     <button type="button" class="back-button" data-back-to="3">← Atrás</button>
                     <div>
-                        <p class="page-eyebrow">Paso 4 de 5</p>
+                        <p class="page-eyebrow">Paso 4 de 6</p>
                         <h2 class="page-title">Seleccionar Proceso</h2>
                     </div>
                 </div>
-                <div class="option-grid option-grid-2">
-                    <button type="button" class="option-button" data-proceso="CHANCADO">CHANCADO</button>
-                    <button type="button" class="option-button" data-proceso="LAVADO">LAVADO</button>
-                    <button type="button" class="option-button" data-proceso="MATIZADO">MATIZADO</button>
-                    <button type="button" class="option-button" data-proceso="RESINADO">RESINADO</button>
-                    <button type="button" class="option-button" data-proceso="RE-TERMOFIJADO">RE-TERMOFIJADO</button>
-                    <button type="button" class="option-button" data-proceso="SECADO">SECADO</button>
-                    <button type="button" class="option-button" data-proceso="SUAVIZADO">SUAVIZADO</button>
-                    <button type="button" class="option-button" data-proceso="TERMO-ACABADO">TERMO-ACABADO</button>
+                <div class="option-grid">
+                    <button type="button" class="option-button option-button-proceso-acabado" data-proceso="ACABADO">ACABADO</button>
+                    <button type="button" class="option-button option-button-proceso-secado" data-proceso="SECADO">SECADO</button>
+                    <button type="button" class="option-button option-button-proceso-reproceso" data-proceso="REPROCESO">REPROCESO</button>
                 </div>
             </div>
         </section>
 
-        <!-- PÁGINA 5: Búsqueda y Registro -->
+        <!-- PÁGINA 5: Motivo / Sub-motivo (solo ACABADO o REPROCESO) -->
         <section class="wizard-page hidden" id="ramas-page-5">
+            <div class="mobile-card">
+                <div class="page-head-nav">
+                    <button type="button" class="back-button" data-back-to="4">← Atrás</button>
+                    <div>
+                        <p class="page-eyebrow">Paso 5 de 6</p>
+                        <h2 class="page-title">Seleccionar Motivo</h2>
+                    </div>
+                </div>
+
+                <!-- Motivos de ACABADO -->
+                <div class="option-grid option-grid-4 motivo-group hidden" id="ramas-motivo-acabado">
+                    <button type="button" class="option-button option-button-motivo" data-motivo="PARA LAVANDERIA">PARA LAVANDERIA</button>
+                    <button type="button" class="option-button option-button-motivo" data-motivo="SUAVIZADO">SUAVIZADO</button>
+                    <button type="button" class="option-button option-button-motivo" data-motivo="RESINADO">RESINADO</button>
+                    <button type="button" class="option-button option-button-motivo" data-motivo="ESPECIAL">ESPECIAL</button>
+                </div>
+
+                <!-- Motivos de REPROCESO -->
+                <div class="option-grid option-grid-4 motivo-group hidden" id="ramas-motivo-reproceso">
+                    <button type="button" class="option-button option-button-motivo" data-motivo="DENSIDAD">DENSIDAD</button>
+                    <button type="button" class="option-button option-button-motivo" data-motivo="ENCOGIMIENTO">ENCOGIMIENTO</button>
+                    <button type="button" class="option-button option-button-motivo" data-motivo="REVIRADO">REVIRADO</button>
+                    <button type="button" class="option-button option-button-motivo" data-motivo="PH">PH</button>
+                    <button type="button" class="option-button option-button-motivo" data-motivo="QUEBRADURAS">QUEBRADURAS</button>
+                    <button type="button" class="option-button option-button-motivo" data-motivo="POR TACTO">POR TACTO</button>
+                    <button type="button" class="option-button option-button-motivo" data-motivo="COSTURA">COSTURA</button>
+                    <button type="button" class="option-button option-button-motivo" data-motivo="CLOQUEADO">CLOQUEADO</button>
+                    <button type="button" class="option-button option-button-motivo" data-motivo="FUERA DE TONO">FUERA DE TONO</button>
+                    <button type="button" class="option-button option-button-motivo" data-motivo="FUERA DE MATCHING">FUERA DE MATCHING</button>
+                    <button type="button" class="option-button option-button-motivo" data-motivo="DEGRADE">DEGRADE</button>
+                    <button type="button" class="option-button option-button-motivo" data-motivo="MALA IGUALACION">MALA IGUALACION</button>
+                    <button type="button" class="option-button option-button-motivo" data-motivo="MANCHAS BLANCAS">MANCHAS BLANCAS</button>
+                    <button type="button" class="option-button option-button-motivo" data-motivo="MANCHAS DE COLORANTE">MANCHAS DE COLORANTE</button>
+                    <button type="button" class="option-button option-button-motivo" data-motivo="MIGRACION">MIGRACION</button>
+                    <button type="button" class="option-button option-button-motivo" data-motivo="LINEAS VERTICALES">LINEAS VERTICALES</button>
+                    <button type="button" class="option-button option-button-motivo" data-motivo="SOLIDEZ">SOLIDEZ</button>
+                </div>
+
+                <!-- Sub-motivos (solo FUERA DE TONO / FUERA DE MATCHING) -->
+                <div class="submotivo-section hidden" id="ramas-submotivo-section">
+                    <p class="submotivo-title">Seleccionar Sub-motivo</p>
+                    <div class="option-grid option-grid-2">
+                        <button type="button" class="option-button" data-submotivo="MATIZADO RAMA">MATIZADO RAMA</button>
+                        <button type="button" class="option-button" data-submotivo="MATIZADO TEÑIDO">MATIZADO TEÑIDO</button>
+                        <button type="button" class="option-button" data-submotivo="CHANCADO">CHANCADO</button>
+                        <button type="button" class="option-button" data-submotivo="DOBLE CURADO">DOBLE CURADO</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PÁGINA 6: Búsqueda y Registro -->
+        <section class="wizard-page hidden" id="ramas-page-6">
 
             <!-- Buscador -->
             <div class="mobile-card">
                 <div class="page-head-nav">
-                    <button type="button" class="back-button" id="ramas-page5-back">← Atrás</button>
+                    <button type="button" class="back-button" id="ramas-search-back">← Atrás</button>
                     <div>
-                        <p class="page-eyebrow">Paso 5 de 5</p>
+                        <p class="page-eyebrow">Paso 6 de 6</p>
                         <h2 class="page-title">Buscar OP-PTDA</h2>
                     </div>
                 </div>
