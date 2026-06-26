@@ -818,7 +818,7 @@ h2 {
     gap: 2px;
     font-size: 13px;
     line-height: 1.35;
-    color: var(--muted);
+    color: var(--text);
     white-space: normal;
     overflow-wrap: anywhere;
 }
@@ -834,6 +834,30 @@ h2 {
     font-weight: 400;
 }
 
+.record-detail-line span.record-article {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.record-article .record-cod-art,
+.record-article .record-article-text,
+.record-article .cod-art-key {
+    display: inline;
+}
+
+.record-article .record-cod-art {
+    color: var(--text);
+    font-weight: 400;
+    white-space: nowrap;
+}
+
+.record-article .cod-art-key {
+    font-weight: 800;
+    color: var(--text);
+}
+
 .record-meta {
     display: grid;
     gap: 4px;
@@ -842,6 +866,7 @@ h2 {
 .meta-line {
     font-size: 13px;
     line-height: 1.35;
+    color: var(--text);
 }
 
 .meta-line strong {
