@@ -372,6 +372,30 @@
         return `<div class="record-edit-buttons">${buttons.join('')}</div>`;
     }
 
+    // Muestra el cod_art completo sin negritas y resalta solo los digitos
+    // significativos finales (p.ej. "06-00029879" -> "06-000" normal + "29879" en negrita)
+    function buildCodArtHtml(codArt) {
+        const raw = String(codArt || '').trim();
+        if (!raw) return '';
+
+        const match = raw.match(/(\d+)(\D*)$/);
+        if (!match) {
+            return `<span class="record-cod-art">${TintoreriaUtils.escapeHtml(raw)}</span>`;
+        }
+
+        const digits = match[1];
+        const tail = match[2];
+        const prefix = raw.slice(0, match.index);
+        const significant = digits.replace(/^0+/, '') || digits;
+        const leadingZeros = digits.slice(0, digits.length - significant.length);
+
+        const before = TintoreriaUtils.escapeHtml(prefix + leadingZeros);
+        const key = TintoreriaUtils.escapeHtml(significant);
+        const after = TintoreriaUtils.escapeHtml(tail);
+
+        return `<span class="record-cod-art">${before}<span class="cod-art-key">${key}</span>${after}</span>`;
+    }
+
     // --- Renderizado de resultados ---
 
     function renderResults() {
@@ -419,6 +443,7 @@
             const status = getStatusInfo(record);
             const color = TintoreriaUtils.escapeHtml(TintoreriaUtils.formatColorLabel(record.color || 'Sin color'));
             const article = TintoreriaUtils.escapeHtml(record.articulo || 'Sin articulo');
+            const codArtHtml = buildCodArtHtml(record.cod_art);
             const ruta = TintoreriaUtils.escapeHtml(record.ruta || '—');
             const clienteOp = TintoreriaUtils.escapeHtml(
                 `${record.cliente || 'Sin cliente'} - ${TintoreriaUtils.formatOpPartida(record.op_tela, record.partida)}`
@@ -437,7 +462,7 @@
                         <div class="record-title">${clienteOp}</div>
                         <span class="status-pill ${status.pillClass}">${TintoreriaUtils.escapeHtml(status.label)}</span>
                     </div>
-                    <div class="record-detail-line"><strong>${color}</strong><span>${article}</span></div>
+                    <div class="record-detail-line"><strong>${color}</strong><span class="record-article">${codArtHtml}<span class="record-article-text">${article}</span></span></div>
                     <div class="record-meta">
                         <div class="meta-line">
                             <strong>Kg(crudo):</strong> ${TintoreriaUtils.escapeHtml(String(record.peso_kg_crudo || '0'))}
