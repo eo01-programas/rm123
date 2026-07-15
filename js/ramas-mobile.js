@@ -419,6 +419,8 @@
         pruneSelection();
 
         if (!state.filteredRecords.length) {
+            // Puede ser un registro recien agregado al Sheet: re-sincroniza sin recargar la pagina.
+            requestAutoRefresh();
             resultSummary.textContent = 'No se encontraron filas para esa OP-PTDA.';
             resultList.innerHTML = '<div class="empty-state">No se encontraron coincidencias exactas para la OP-PTDA ingresada.</div>';
             if (selectAllBtn) selectAllBtn.classList.add('hidden');
@@ -1223,8 +1225,36 @@
         if (cancelEditBtn) cancelEditBtn.addEventListener('click', exitEditMode);
     }
 
+    // --- Auto-refresh: vuelve a consultar el Sheet sin recargar la pagina ---
+
+    const AUTO_REFRESH_MIN_INTERVAL_MS = 15000;
+    let lastAutoRefreshAt = 0;
+    let autoRefreshInFlight = false;
+
+    async function requestAutoRefresh() {
+        const now = Date.now();
+        if (autoRefreshInFlight || now - lastAutoRefreshAt < AUTO_REFRESH_MIN_INTERVAL_MS) return;
+        autoRefreshInFlight = true;
+        lastAutoRefreshAt = now;
+        try {
+            await refreshRemoteRecords();
+        } finally {
+            autoRefreshInFlight = false;
+        }
+    }
+
+    function bindAutoRefreshEvents() {
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') requestAutoRefresh();
+        });
+        window.addEventListener('pageshow', (event) => {
+            if (event.persisted) requestAutoRefresh();
+        });
+    }
+
     async function init() {
         bindEvents();
+        bindAutoRefreshEvents();
         await hydrateFromCache();
         await refreshRemoteRecords();
     }
