@@ -190,6 +190,7 @@
 
         const response = await fetch(url.toString(), {
             method: 'GET',
+            cache: 'no-store',
             headers: {
                 Accept: 'application/json, text/javascript, */*;q=0.1'
             }
